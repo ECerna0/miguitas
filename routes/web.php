@@ -7,12 +7,15 @@ use Inertia\Inertia;
 use \App\Http\Controllers\Admin\CategoryController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+
+    return Inertia::render('Shop/Home');
+
+    /*  return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-    ]);
+    ]); */
 });
 
 Route::get('/dashboard', function () {
@@ -27,4 +30,4 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->prefix("admin")->name("admin.")->group(function () {
     Route::resource("/cat", CategoryController::class);
 });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
