@@ -448,22 +448,14 @@ const toggleMenu=()=>{
         </aside>
         <body class="font-secondary dark:bg-black">
         <div id="overlay" class="bg-gray-900/80 dark:bg-zinc-900/90 fixed inset-0 z-10 hidden"></div>
-        <main class="bg-gray-50 dark:bg-gray-900 h-full">
+        <main class="bg-gray-50 dark:bg-gray-900 h-full" style="min-height: 92.5vh">
             <div class="xl:ml-72 mt-16">
-<!--                <div class="pt-4 px-4 xl:hidden">-->
-<!--                    @include('layouts.__partials.breadcrumb')-->
-<!--                </div>-->
-                <!-- Page Heading -->
-                <header class="bg-white dark:bg-gray-800 shadow" v-if="$slots.header">
+                <header class="bg-white dark:bg-black shadow" v-if="$slots.header">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         <slot name="header" />
                     </div>
                 </header>
-
-                <!-- Page Content -->
-                <main>
                     <slot />
-                </main>
             </div>
         </main>
         </body>
