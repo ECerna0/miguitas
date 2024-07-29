@@ -4,7 +4,7 @@ export default {
     CreateNewCategory(payload: any) {
         return axios.post(base_url, payload);
     },
-    GetReport() {
-        return axios.get('/chart/report')
+    GetCategories() {
+        return axios.get(base_url+'/all')
     },
 }

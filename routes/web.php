@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 Route::middleware('auth')->prefix("admin")->name("admin.")->group(function () {
+    Route::get("/cat/all", [CategoryController::class, 'getAllCategories'])->name('cat.all');
     Route::resource("/cat", CategoryController::class);
 });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

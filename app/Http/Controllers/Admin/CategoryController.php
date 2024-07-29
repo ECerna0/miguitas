@@ -38,6 +38,10 @@ class CategoryController extends Controller
     {
         return redirect()->route("admin.categories.index");
     }
+    public function show()
+    {
+//        return redirect()->route("admin.categories.index");
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -64,7 +68,7 @@ class CategoryController extends Controller
                 return response()->json(['message'=>'Category unssaved successfully']);
             }
 
-        }catch (Exception $exception){
+        }catch (\Exception $exception){
             DB::rollBack();
             return response()->json(['message'=>$exception->getMessage()], 500);
         }
@@ -157,5 +161,11 @@ class CategoryController extends Controller
         if ($request->ajax()) {
             return view("layouts.__partials.ajax.row-categorie", compact("categories"))->render();
         }
+    }
+    public function getAllCategories()
+    {
+        $categories = Categorie::with("subcategories")->get()->makeHidden(['updated_at', 'created_at']);
+//        dd($categories);
+        return response()->json(["categories" => $categories]);
     }
 }

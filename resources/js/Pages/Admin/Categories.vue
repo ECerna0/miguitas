@@ -75,7 +75,7 @@
                                      data-popper-placement="bottom"
                                      style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(1262px, 293px, 0px);">
                                     <form
-                                          id="formSearchCategorieCheck">
+                                        id="formSearchCategorieCheck">
                                         <input type="hidden" name="_token"
                                                value="pmWQ5HbLkUUec7TMrr637gShdzRAH18Tmsa4LBl2" autocomplete="off">
                                         <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
@@ -209,13 +209,13 @@
                                     </label>
                                     <select v-model="form.parent_id"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option v-for="cat in $page.props.categories" :key="cat.id" selected
+                                        <option v-for="cat in allCategories" :key="cat.id" selected
                                                 :value="cat.id">{{ cat.name }}
                                         </option>
                                     </select>
                                 </div>
-                                <error-message name="parent_id"  v-slot="{ message }">
-                                    <small class="text-red-600">{{message}}</small>
+                                <error-message name="parent_id" v-slot="{ message }">
+                                    <small class="text-red-600">{{ message }}</small>
                                 </error-message>
                             </div>
                         </div>
@@ -254,7 +254,8 @@
                         <div class="flex items-center justify-center w-full">
                             <label for="imageCategorie"
                                    class="flex flex-col items-center justify-center w-full h-80 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-transparent hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-zinc-950 ">
-                                <div v-if="form.image==null" class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <div v-if="form.image==null"
+                                     class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg class="w-12 h-12 text-gray-400 dark:text-gray-500"
                                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
                                          color="#000000" fill="none">
@@ -273,14 +274,15 @@
                                 </div>
                                 <img v-else :src="tempUri" alt="Preview Image" id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
-                                <Field id="imageCategorie" type="file" class="hidden" @change="createImagePreview"
+                                <Field id="imageCategorie" type="file" accept="image/png, image/jpeg" class="hidden"
+                                       @change="createImagePreview"
                                        name="image"/>
                             </label>
 
                         </div>
                         <error-message name="image" v-slot="{ message }">
-                        <small class="text-red-600">Error: Imagén es requerido</small>
-                    </error-message>
+                            <small class="text-red-600">Error: Imagén es requerido</small>
+                        </error-message>
                     </div>
                     <div class="flex items-center justify-center gap-2">
                         <button type="submit"
@@ -318,6 +320,7 @@ import AuthenticatedAdminLayout from "@/Layouts/AuthenticatedAdminLayout.vue";
 import {initFlowbite} from "flowbite";
 import {Drawer} from 'flowbite';
 import {useCategoriesService} from "@/Store/Category";
+import {useToast} from "vue-toastification";
 
 const loading: any = ref(true);
 const total_rows = ref(0);
@@ -351,15 +354,17 @@ const params = reactive({
 const rows: any = ref(null);
 const page = usePage()
 const store = useCategoriesService()
+const toast = useToast()
 // form init
 const form = ref({
+    id: null,
     name: null,
     parent_id: page.props.categories[0]?.id,
     category_type: 'principal',
     image: null
 })
-const fileImage = ref<File|null>()
-const tempUri= ref(null)
+const allCategories = ref([])
+const tempUri = ref(null)
 const schemaForm = computed(() => {
     if (form.value.category_type === 'secondary') {
         return yup.object({
@@ -394,9 +399,9 @@ const initCreateDrawer = () => {
 }
 const filteredData = computed(() => {
     if (!params.search) {
-        return page.props.categories;
+        return allCategories.value;
     }
-    return page.props.categories.filter(row => {
+    return rows.value.filter(row => {
         return Object.values(row).some(value =>
             String(value).toLowerCase().includes(params.search.toLowerCase())
         );
@@ -405,45 +410,54 @@ const filteredData = computed(() => {
 const getCategories = async () => {
     try {
         loading.value = true;
-        const data = filteredData.value
-        rows.value = data;
-        total_rows.value = data?.length
-    } catch {
+        const {data} = await store.getCategories()
+        console.log(data.categories)
+        allCategories.value= data.categories
+        rows.value = data.categories;
+        total_rows.value = data.categories?.length
+    } catch (e) {
+        console.log(e)
     }
 
     loading.value = false;
 };
 const onSubmit = async () => {
-    if(catNameExists.value){
+    if (catNameExists.value) {
         return
     }
-    try{
+    try {
         // create new form data
         let formData = new FormData();
         formData.append('name', form.value.name)
         formData.append('parent_id', form.value.parent_id)
         formData.append('image', form.value.image)
         formData.append('category_type', form.value.category_type)
-        let {data} = await store.saveCategory(formData)
-        console.log(data)
-    }catch (e) {
+        let data = await store.saveCategory(formData)
+        if (data.status == 200) {
+            toast.success('Categoría guardada')
+            drawer.value.hide()
+        } else {
+            toast.warning('Error al guardar, contacte soporte')
+        }
+    } catch (e) {
 
     }
 }
 const filterAction = () => {
-    getCategories();
+     rows.value = filteredData.value
+    total_rows.value = filteredData.value.length
 }
-const createImagePreview=(e:any)=>{
-   form.value.image= e.target.files[0]
-    tempUri.value=URL.createObjectURL(form.value.image)
+const createImagePreview = (e: any) => {
+    form.value.image = e.target.files[0]
+    tempUri.value = URL.createObjectURL(form.value.image)
 }
-const catNameExists= computed (()=>{
+const catNameExists = computed(() => {
     let cats = page.props.categories
-    let exist =false
+    let exist = false
     console.log(cats)
-    cats.map((e)=>{
-        if(form.value.name ===e.name && e.parent_id===null && form.value.category_type!=='secondary'){
-            exist=true
+    cats.map((e) => {
+        if (form.value.name === e.name && e.parent_id === null && form.value.category_type !== 'secondary') {
+            exist = true
         }
     })
     return exist
