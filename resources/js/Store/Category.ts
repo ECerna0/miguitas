@@ -17,6 +17,9 @@ export const useCategoriesService = defineStore("communicationsType", () => {
     function saveCategory(payload: any) {
         return CategoriesService.CreateNewCategory(payload);
     }
+    function updateCategory(payload: any) {
+        return CategoriesService.UpdateCategory(payload);
+    }
 
     function getCategories() {
         return CategoriesService.GetCategories();
@@ -25,6 +28,7 @@ export const useCategoriesService = defineStore("communicationsType", () => {
     return {
         saveCategory,
         getCategories,
-        categoriesType
+        categoriesType,
+        updateCategory
     };
 });

@@ -1,5 +1,4 @@
 <template>
-
     <AuthenticatedAdminLayout>
         <Head title="Categorías"></Head>
         <div class="dark:bg-black py-4 px-4 shadow-sm flex flex-col items-start border-y dark:border-zinc-900">
@@ -126,6 +125,7 @@
                             <template #actions="data">
                                 <div class="flex gap-2">
                                     <button type="button"
+                                            @click="updateCategoryDrawer(data.value)"
                                             class="border-2 border-green-500 text-green-500 hover:text-white hover:bg-green-500 dark:bg-green-800 dark:hover:bg-green-900 dark:text-white font-medium rounded flex items-center gap-2 transition-colors text-sm p-2 editCategorie">
                                         <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24" width="24" height="24" color="#000000" fill="none">
@@ -170,7 +170,7 @@
              tabindex="-1" aria-labelledby="drawer-right-label">
             <h5 id="drawer-right-example-label"
                 class="inline-flex items-center mb-4 text-base font-semibold text-gray-500 dark:text-gray-400">
-                Nueva categoría
+                {{ form.id ? 'Editar' : 'Nueva' }} categoría
             </h5>
             <button type="button"
                     @click="drawer.hide()"
@@ -272,11 +272,17 @@
                                         class="font-semibold">Clic para agregar </span> o desliza la imagen</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, WEBP</p>
                                 </div>
-                                <img v-else :src="tempUri" alt="Preview Image" id="previewImage"
+                                <img v-if="form.image!==null && form.id ===null" :src="tempUri" alt="Preview Image"
+                                     id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
-                                <Field id="imageCategorie" type="file" accept="image/png, image/jpeg" class="hidden"
+                                <img v-if="form.image!==null && form.id !==null" :src="'/storage/'+ form.image"
+                                     alt="Preview Image" id="previewImage"
+                                     class="w-56 h-64 object-cover m-10">
+                                <Field id="image" type="file" accept="image/png, image/jpeg" class="hidden"
                                        @change="createImagePreview"
-                                       name="image"/>
+                                       name="image">
+
+                                </Field>
                             </label>
 
                         </div>
@@ -295,7 +301,7 @@
                                     d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z"
                                     stroke="currentColor" stroke-width="1.5"></path>
                             </svg>
-                            Agregar categoría
+                            {{ form.id ? 'Actualizar' : 'Agregar' }} categoría
                         </button>
                         <button type="button"
                                 @click="drawer.hide()"
@@ -356,14 +362,14 @@ const page = usePage()
 const store = useCategoriesService()
 const toast = useToast()
 // form init
+const allCategories = ref([])
 const form = ref({
     id: null,
     name: null,
-    parent_id: page.props.categories[0]?.id,
+    parent_id: null,
     category_type: 'principal',
     image: null
 })
-const allCategories = ref([])
 const tempUri = ref(null)
 const schemaForm = computed(() => {
     if (form.value.category_type === 'secondary') {
@@ -411,9 +417,9 @@ const getCategories = async () => {
     try {
         loading.value = true;
         const {data} = await store.getCategories()
-        console.log(data.categories)
-        allCategories.value= data.categories
-        rows.value = data.categories;
+        allCategories.value = data.categories
+        form.value.parent_id = allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+            rows.value = data.categories;
         total_rows.value = data.categories?.length
     } catch (e) {
         console.log(e)
@@ -432,19 +438,49 @@ const onSubmit = async () => {
         formData.append('parent_id', form.value.parent_id)
         formData.append('image', form.value.image)
         formData.append('category_type', form.value.category_type)
-        let data = await store.saveCategory(formData)
-        if (data.status == 200) {
-            toast.success('Categoría guardada')
-            drawer.value.hide()
+        if (form.value.id === null) {
+            let data = await store.saveCategory(formData)
+            if (data.status == 200) {
+                toast.success('Categoría guardada')
+                drawer.value.hide()
+                form.value = Object.assign({}, {
+                    id: null,
+                    name: null,
+                    parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                    category_type: 'principal',
+                    image: null
+                })
+            } else {
+                toast.warning('Error al guardar, contacte soporte')
+            }
         } else {
-            toast.warning('Error al guardar, contacte soporte')
+            let data = await store.updateCategory(formData)
+            if (data.status == 200) {
+                toast.success('Categoría guardada')
+                drawer.value.hide()
+                form.value = Object.assign({}, {
+                    id: null,
+                    name: null,
+                    parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                    category_type: 'principal',
+                    image: null
+                })
+            } else {
+                toast.warning('Error al guardar, contacte soporte')
+            }
         }
-    } catch (e) {
 
+    } catch (e) {
+        toast.warning('Error al guardar, contacte soporte')
     }
 }
+const updateCategoryDrawer = (cat: any) => {
+    form.value = cat
+    form.value.category_type = cat.parent_id == null ? "principal" : "secondary"
+    drawer.value.show()
+}
 const filterAction = () => {
-     rows.value = filteredData.value
+    rows.value = filteredData.value
     total_rows.value = filteredData.value.length
 }
 const createImagePreview = (e: any) => {
@@ -456,7 +492,7 @@ const catNameExists = computed(() => {
     let exist = false
     console.log(cats)
     cats.map((e) => {
-        if (form.value.name === e.name && e.parent_id === null && form.value.category_type !== 'secondary') {
+        if (form.value.name === e.name && form.value.id == null) {
             exist = true
         }
     })

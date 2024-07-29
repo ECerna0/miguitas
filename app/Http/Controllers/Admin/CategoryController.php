@@ -26,7 +26,7 @@ class CategoryController extends Controller
     public function index(Categorie $category = null)
     {
         $categories = Categorie::with("subcategories")->get()->makeHidden(['updated_at', 'created_at']);
-        return Inertia::render('Admin/Categories',["categories" => $categories, "$category" => $category]);
+        return Inertia::render('Admin/Categories', ["categories" => $categories, "$category" => $category]);
 //        return view("admin.categories.index", ["categories" => $categories, "$category" => $category]);
     }
 
@@ -38,6 +38,7 @@ class CategoryController extends Controller
     {
         return redirect()->route("admin.categories.index");
     }
+
     public function show()
     {
 //        return redirect()->route("admin.categories.index");
@@ -51,26 +52,26 @@ class CategoryController extends Controller
         try {
             DB::beginTransaction();
             $cat = new Categorie();
-            $image =null;
-            if($request->category_type!=="principal"){
-             $cat->parent_id = $request->parent_id;
+            $image = null;
+            if ($request->category_type !== "principal") {
+                $cat->parent_id = $request->parent_id;
             }
             if ($request->hasFile("image")) {
-                $image= ImageHelper::saveImage($request->file("image"), "images/categories");
+                $image = ImageHelper::saveImage($request->file("image"), "images/categories");
             }
-            $cat->name= $request->name;
+            $cat->name = $request->name;
             $cat->image = $image;
-            if($cat->save()){
+            if ($cat->save()) {
                 DB::commit();
-                return response()->json(['message'=>'Category saved successfully']);
-            }else{
+                return response()->json(['message' => 'Category saved successfully']);
+            } else {
                 DB::rollBack();
-                return response()->json(['message'=>'Category unssaved successfully']);
+                return response()->json(['message' => 'Category unssaved successfully']);
             }
 
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             DB::rollBack();
-            return response()->json(['message'=>$exception->getMessage()], 500);
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
     }
 
@@ -93,27 +94,35 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $rules = [
-            "name" => "required|string",
-            "image" => "nullable|image",
-        ];
+        try {
+            DB::beginTransaction();
+            $rules = [
+                "name" => "required|string",
+                "image" => "nullable|image",
+            ];
 
-        $categorie = Categorie::find($id);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo encontrar la categoría");
-        }
-
-        $validated = $request->validate($rules);
-        if ($request->hasFile("image")) {
-            if ($categorie->image) {
-                ImageHelper::deleteImage($categorie->image);
+            $categorie = Categorie::find($id);
+            if (!$categorie) {
+                DB::rollBack();
+                return response()->json(['message' => "No se pudo encontrar la categoría"], 500);
             }
-            $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
-        } else {
-            $validated["image"] = $categorie->image;
+
+            $validated = $request->validate($rules);
+            if ($request->hasFile("image")) {
+                if ($categorie->image) {
+                    ImageHelper::deleteImage($categorie->image);
+                }
+                $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
+            } else {
+                $validated["image"] = $categorie->image;
+            }
+            $categorie->update($validated);
+            DB::commit();
+            return response()->json(['message' => 'Category saved successfully']);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
-        $categorie->update($validated);
-        return redirect()->route("admin.categories.index")->with("success", "Categoría actualizada correctamente");
     }
 
     /**
@@ -162,6 +171,7 @@ class CategoryController extends Controller
             return view("layouts.__partials.ajax.row-categorie", compact("categories"))->render();
         }
     }
+
     public function getAllCategories()
     {
         $categories = Categorie::with("subcategories")->get()->makeHidden(['updated_at', 'created_at']);
