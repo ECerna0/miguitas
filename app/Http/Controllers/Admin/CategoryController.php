@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Categorie;
 use App\Models\SubCategorie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use mysql_xdevapi\Exception;
 
 class CategoryController extends Controller
 {
@@ -42,41 +44,30 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-
-        $rules = [
-            "name" => "required|string",
-            "image" => "required|image",
-        ];
-
-        if ($request->input("typeCategorie") === "secundaria") {
-            $rules["categorie_id"] = "required|exists:categories,id";
-            $validated = $request->validate($rules);
-            $categorie = Categorie::find($request->input("categorie_id"));
-            if (!$categorie) {
-                return redirect()->back()->with("error", "No se pudo encontrar la categoría padre");
+        try {
+            DB::beginTransaction();
+            $cat = new Categorie();
+            $image =null;
+            if($request->category_type!=="principal"){
+             $cat->parent_id = $request->parent_id;
             }
-
             if ($request->hasFile("image")) {
-                $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/subcategories");
+                $image= ImageHelper::saveImage($request->file("image"), "images/categories");
+            }
+            $cat->name= $request->name;
+            $cat->image = $image;
+            if($cat->save()){
+                DB::commit();
+                return response()->json(['message'=>'Category saved successfully']);
+            }else{
+                DB::rollBack();
+                return response()->json(['message'=>'Category unssaved successfully']);
             }
 
-            $subCategorie = SubCategorie::create($validated);
-            if (!$subCategorie) {
-                return redirect()->back()->with("error", "No se pudo crear la subcategoría");
-            }
-            return redirect()->route("admin.categories.index")->with("success", "Subcategoría creada correctamente");
+        }catch (Exception $exception){
+            DB::rollBack();
+            return response()->json(['message'=>$exception->getMessage()], 500);
         }
-
-        $validated = $request->validate($rules);
-
-        if ($request->hasFile("image")) {
-            $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
-        }
-        $categorie = Categorie::create($validated);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo crear la categoría");
-        }
-        return redirect()->route("admin.categories.index")->with("success", "Categoría creada correctamente");
     }
 
 
