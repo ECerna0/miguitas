@@ -24,6 +24,7 @@
         "@bhplugin/vue3-datatable": "^1.1.4",
         "flowbite": "^2.4.1",
         "flowbite-vue": "^0.1.5",
+        "pinia": "^2.2.0",
         "vee-validate": "^4.13.2",
         "yup": "^1.4.0"
     }

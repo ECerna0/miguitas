@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import ClickOutsideDirective from "../Directives/ClickOutsideDirective";
+import { createPinia } from 'pinia'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
@@ -13,6 +14,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(createPinia())
             .directive('click-outside',ClickOutsideDirective)
             .use(ZiggyVue)
             .mount(el);
