@@ -43,7 +43,7 @@
                         </div>
                         <div
                             class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                            <button type="button" @click="drawer.show()"
+                            <button type="button" @click="openCreateCat()"
                                     class="bg-black text-white hover:bg-zinc-900 dark:bg-white dark:text-black dark:hover:bg-zinc-200 font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 "
                                     data-drawer-target="drawer-right-example" data-drawer-show="drawer-right-example"
                                     data-drawer-placement="right" aria-controls="drawer-right-example">
@@ -111,7 +111,7 @@
                                         :isServerMode="true"
                                         :pageSize="params.pagesize" :search="params.search">
                             <template #subcategories="data">
-                                <div v-if="data.value.subcategories===null">
+                                <div v-if="data.value.subcategories.length===0">
                                     No posee subcategorías
                                 </div>
                                 <div v-else>
@@ -140,6 +140,7 @@
 
                                     </button>
                                     <button type="button" data-form="formDeleteCategorie"
+                                            @click="openDeleteModal(data.value)"
                                             class="border-2 border-red-500 text-red-500 hover:text-white hover:bg-red-500 dark:bg-red-800 dark:hover:bg-red-900 dark:text-white  font-medium rounded flex items-center gap-2 transition-colors text-sm p-2 buttonDelete">
                                         <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24" width="24" height="24" color="#000000" fill="none">
@@ -173,7 +174,7 @@
                 {{ form.id ? 'Editar' : 'Nueva' }} categoría
             </h5>
             <button type="button"
-                    @click="drawer.hide()"
+                    @click="closeDrawer()"
                     data-drawer-hide="drawer-right-example" aria-controls="drawer-right-example"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 end-2.5 inline-flex items-center justify-center dark:hover:bg-zinc-900 dark:hover:text-white close-drawer-right-example">
                 <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -275,7 +276,8 @@
                                 <img v-if="form.image!==null && form.id ===null" :src="tempUri" alt="Preview Image"
                                      id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
-                                <img v-if="form.image!==null && form.id !==null && typeof form.image ==='string'" :src="'/storage/'+ form.image"
+                                <img v-if="form.image!==null && form.id !==null && typeof form.image ==='string'"
+                                     :src="'/storage/'+ form.image"
                                      alt="Preview Image" id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
                                 <img v-else :src="tempUri" alt="Preview Image"
@@ -308,7 +310,7 @@
                             {{ form.id ? 'Actualizar' : 'Agregar' }} categoría
                         </button>
                         <button type="button"
-                                @click="drawer.hide()"
+                                @click="closeDrawer()"
                                 data-drawer-hide="drawer-right-example" aria-controls="drawer-right-example"
                                 class="border-2 text-zinc-600 hover:bg-zinc-100 border-zinc-300 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-900  font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 close-drawer-right-example">
                             Cancelar
@@ -317,6 +319,28 @@
                 </Form>
             </div>
         </div>
+        <modal :show="deleteModal" @close="closeDeleteModal()" :closeable="true">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    ¿Desea continuar y eliminar categoría?
+                </h2>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Una vez la categoría es eliminada, no puede ser restaurada.
+                </p>
+                <div class="mt-6 flex justify-end">
+                    <SecondaryButton @click="closeDeleteModal()"> Cancelar</SecondaryButton>
+
+                    <DangerButton
+                        class="ms-3"
+                        :disabled="loading"
+                        @click="confirmDeleteCat()"
+                    >
+                        Eliminar
+                    </DangerButton>
+                </div>
+            </div>
+        </modal>
     </AuthenticatedAdminLayout>
 </template>
 <script setup lang="ts">
@@ -331,6 +355,9 @@ import {initFlowbite} from "flowbite";
 import {Drawer} from 'flowbite';
 import {useCategoriesService} from "@/Store/Category";
 import {useToast} from "vue-toastification";
+import Modal from "@/Components/Modal.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import DangerButton from "@/Components/DangerButton.vue";
 
 const loading: any = ref(true);
 const total_rows = ref(0);
@@ -367,6 +394,7 @@ const store = useCategoriesService()
 const toast = useToast()
 // form init
 const allCategories = ref([])
+const deleteModal = ref(false)
 const form = ref({
     id: null,
     name: null,
@@ -376,7 +404,7 @@ const form = ref({
 })
 const tempUri = ref(null)
 const schemaForm = computed(() => {
-    if(form.value.id !==null){
+    if (form.value.id !== null) {
         return yup.object({
             name: yup.string().required(),
             image: yup.mixed().optional(),
@@ -442,7 +470,7 @@ const onSubmit = async () => {
     if (catNameExists.value) {
         return
     }
-    if(form.value.image==null){
+    if (form.value.image == null) {
         toast.warning('Imagen es requerido');
         return
     }
@@ -471,7 +499,7 @@ const onSubmit = async () => {
                 toast.warning('Error al guardar, contacte soporte')
             }
         } else {
-            let data = await store.updateCategory(formData,form.value.id)
+            let data = await store.updateCategory(formData, form.value.id)
             if (data.status == 200) {
                 toast.success('Categoría actualizada')
                 drawer.value.hide()
@@ -511,7 +539,6 @@ const createImagePreview = (e: any) => {
 const catNameExists = computed(() => {
     let cats = page.props.categories
     let exist = false
-    console.log(cats)
     cats.map((e) => {
         if (form.value.name === e.name && form.value.id == null) {
             exist = true
@@ -519,4 +546,56 @@ const catNameExists = computed(() => {
     })
     return exist
 })
+const closeDeleteModal = () => {
+    deleteModal.value = false
+}
+const closeDrawer = () => {
+    drawer.value.hide()
+    form.value = Object.assign({}, {
+        id: null,
+        name: null,
+        parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+        category_type: 'principal',
+        image: null
+    })
+    getCategories()
+}
+const openCreateCat = () => {
+    drawer.value.show()
+    form.value = Object.assign({}, {
+        id: null,
+        name: null,
+        parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+        category_type: 'principal',
+        image: null
+    })
+}
+const openDeleteModal = (cat) => {
+    deleteModal.value = true
+    form.value = cat
+}
+const confirmDeleteCat = async () => {
+    try {
+        loading.value = true
+        let data = await store.deleteCategory(form.value.id)
+        if (data.status == 200) {
+            toast.success('Categoría eliminada')
+            drawer.value.hide()
+            form.value = Object.assign({}, {
+                id: null,
+                name: null,
+                parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                category_type: 'principal',
+                image: null
+            })
+            getCategories()
+            loading.value = false
+            deleteModal.value = false
+        } else {
+            toast.warning('Error al guardar, contacte soporte')
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
 </script>

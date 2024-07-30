@@ -17,6 +17,7 @@ export const useCategoriesService = defineStore("communicationsType", () => {
     function saveCategory(payload: any) {
         return CategoriesService.CreateNewCategory(payload);
     }
+
     function updateCategory(payload: any, id: number) {
         return CategoriesService.UpdateCategory(payload, id);
     }
@@ -25,10 +26,15 @@ export const useCategoriesService = defineStore("communicationsType", () => {
         return CategoriesService.GetCategories();
     }
 
+    function deleteCategory(id: number) {
+        return CategoriesService.DeleteCategory(id);
+    }
+
     return {
         saveCategory,
         getCategories,
         categoriesType,
-        updateCategory
+        updateCategory,
+        deleteCategory
     };
 });
