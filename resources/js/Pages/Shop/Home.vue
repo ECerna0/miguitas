@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import HomeHeader from "@/Components/frontend/Home/HomeHeader.vue";
 import UserLayout from "@/Layouts/UserLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 </script>
@@ -6,9 +7,7 @@ import { Head, Link } from "@inertiajs/vue3";
 <template>
     <UserLayout>
         <Head title="Inicio" />
-        <div>
-            <h1>Bienvenido a la Tienda</h1>
-        </div>
+        <HomeHeader />
     </UserLayout>
 </template>
 
