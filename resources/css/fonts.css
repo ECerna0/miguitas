@@ -1,0 +1,55 @@
+@font-face {
+    font-family: "pluto-m";
+    src: url("../../public/fonts/pluto-m.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "pluto-r";
+    src: url("../../public/fonts/pluto-r.otf") format("opentype");
+}
+
+/* DIN */
+
+@font-face {
+    font-family: "din-b";
+    src: url("../../public/fonts/din-b.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "din-i";
+    src: url("../../public/fonts/din-i.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "din-r";
+    src: url("../../public/fonts/din-r.otf") format("opentype");
+}
+
+/* DIN Exp */
+
+@font-face {
+    font-family: "dine-b";
+    src: url("../../public/fonts/dine-b.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "dine-i";
+    src: url("../../public/fonts/dine-i.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "dine-r";
+    src: url("../../public/fonts/dine-r.otf") format("opentype");
+}
+
+/* DIN Condensed */
+
+@font-face {
+    font-family: "dinc-b";
+    src: url("../../public/fonts/dinc-b.otf") format("opentype");
+}
+
+@font-face {
+    font-family: "dinc-r";
+    src: url("../../public/fonts/dinc-r.otf") format("opentype");
+}
