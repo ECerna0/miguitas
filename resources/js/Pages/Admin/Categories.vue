@@ -295,6 +295,7 @@
                     </div>
                     <div class="flex items-center justify-center gap-2">
                         <button type="submit"
+                                :disabled="loading"
                                 class="bg-black text-white hover:bg-zinc-900 dark:bg-white dark:text-black dark:hover:bg-zinc-200 font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 ">
                             <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                  width="24" height="24" color="#000000" fill="none">
@@ -446,6 +447,7 @@ const onSubmit = async () => {
         return
     }
     try {
+        loading.value = true;
         // create new form data
         let formData = new FormData();
         formData.append('name', form.value.name)
@@ -485,6 +487,8 @@ const onSubmit = async () => {
                 toast.warning('Error al guardar, contacte soporte')
             }
         }
+
+        loading.value = false;
 
     } catch (e) {
         console.log(e)

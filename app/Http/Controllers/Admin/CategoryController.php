@@ -130,17 +130,28 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $categorie = Categorie::find($id);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo eliminar la categoría");
-        }
+        try {
+            DB::beginTransaction();
+            $categorie = Categorie::find($id);
+            if (!$categorie) {
+                return redirect()->back()->with("error", "No se pudo eliminar la categoría");
+            }
 
-        if ($categorie->image) {
-            ImageHelper::deleteImage($categorie->image);
+            if ($categorie->image) {
+                ImageHelper::deleteImage($categorie->image);
+            }
+            DB::commit();
+            if ($categorie->delete()) {
+                DB::commit();
+                return response()->json(['message' => 'Category deleted successfully']);
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Unable to delete'], 500);
+            }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
-
-        $categorie->delete();
-        return redirect()->route("admin.categories.index")->with("success", "Categoría eliminada correctamente");
     }
 
 
