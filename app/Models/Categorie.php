@@ -16,7 +16,7 @@ class Categorie extends Model
 
 
     public function subcategories() {
-        return $this->belongsTo(Categorie::class);
+        return $this->hasMany(Categorie::class, 'parent_id');
     }
     public function parent() {
         return $this->hasOne(Categorie::class);

@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Categorie;
 use App\Models\SubCategorie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use mysql_xdevapi\Exception;
 
 class CategoryController extends Controller
 {
@@ -24,7 +26,7 @@ class CategoryController extends Controller
     public function index(Categorie $category = null)
     {
         $categories = Categorie::with("subcategories")->get()->makeHidden(['updated_at', 'created_at']);
-        return Inertia::render('Admin/Categories',["categories" => $categories, "$category" => $category]);
+        return Inertia::render('Admin/Categories', ["categories" => $categories, "$category" => $category]);
 //        return view("admin.categories.index", ["categories" => $categories, "$category" => $category]);
     }
 
@@ -37,46 +39,40 @@ class CategoryController extends Controller
         return redirect()->route("admin.categories.index");
     }
 
+    public function show()
+    {
+//        return redirect()->route("admin.categories.index");
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-
-        $rules = [
-            "name" => "required|string",
-            "image" => "required|image",
-        ];
-
-        if ($request->input("typeCategorie") === "secundaria") {
-            $rules["categorie_id"] = "required|exists:categories,id";
-            $validated = $request->validate($rules);
-            $categorie = Categorie::find($request->input("categorie_id"));
-            if (!$categorie) {
-                return redirect()->back()->with("error", "No se pudo encontrar la categoría padre");
+        try {
+            DB::beginTransaction();
+            $cat = new Categorie();
+            $image = null;
+            if ($request->category_type !== "principal") {
+                $cat->parent_id = $request->parent_id;
             }
-
             if ($request->hasFile("image")) {
-                $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/subcategories");
+                $image = ImageHelper::saveImage($request->file("image"), "images/categories");
+            }
+            $cat->name = $request->name;
+            $cat->image = $image;
+            if ($cat->save()) {
+                DB::commit();
+                return response()->json(['message' => 'Category saved successfully']);
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Category unssaved successfully']);
             }
 
-            $subCategorie = SubCategorie::create($validated);
-            if (!$subCategorie) {
-                return redirect()->back()->with("error", "No se pudo crear la subcategoría");
-            }
-            return redirect()->route("admin.categories.index")->with("success", "Subcategoría creada correctamente");
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
-
-        $validated = $request->validate($rules);
-
-        if ($request->hasFile("image")) {
-            $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
-        }
-        $categorie = Categorie::create($validated);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo crear la categoría");
-        }
-        return redirect()->route("admin.categories.index")->with("success", "Categoría creada correctamente");
     }
 
 
@@ -98,27 +94,35 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $rules = [
-            "name" => "required|string",
-            "image" => "nullable|image",
-        ];
-
-        $categorie = Categorie::find($id);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo encontrar la categoría");
-        }
-
-        $validated = $request->validate($rules);
-        if ($request->hasFile("image")) {
-            if ($categorie->image) {
-                ImageHelper::deleteImage($categorie->image);
+        try {
+            DB::beginTransaction();
+            $categorie = Categorie::find($id);
+            if (!$categorie) {
+                DB::rollBack();
+                return response()->json(['message' => "No se pudo encontrar la categoría"], 500);
             }
-            $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
-        } else {
-            $validated["image"] = $categorie->image;
+
+            $validated = $categorie;
+//            dd($request->parent_id);
+            $validated->name = $request->name;
+            $validated->parent_id = $request->parent_id === "null" ? null : $request->parent_id;
+            if ($request->hasFile("image")) {
+                if ($categorie->image) {
+                    ImageHelper::deleteImage($categorie->image);
+                }
+                $validated->image = ImageHelper::saveImage($request->file("image"), "images/categories");
+            }
+            if ($validated->save()) {
+                DB::commit();
+                return response()->json(['message' => 'Category saved successfully']);
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Unable to save'], 500);
+            }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
-        $categorie->update($validated);
-        return redirect()->route("admin.categories.index")->with("success", "Categoría actualizada correctamente");
     }
 
     /**
@@ -126,17 +130,28 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $categorie = Categorie::find($id);
-        if (!$categorie) {
-            return redirect()->back()->with("error", "No se pudo eliminar la categoría");
-        }
+        try {
+            DB::beginTransaction();
+            $categorie = Categorie::find($id);
+            if (!$categorie) {
+                return redirect()->back()->with("error", "No se pudo eliminar la categoría");
+            }
 
-        if ($categorie->image) {
-            ImageHelper::deleteImage($categorie->image);
+            if ($categorie->image) {
+                ImageHelper::deleteImage($categorie->image);
+            }
+            DB::commit();
+            if ($categorie->delete()) {
+                DB::commit();
+                return response()->json(['message' => 'Category deleted successfully']);
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Unable to delete'], 500);
+            }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
-
-        $categorie->delete();
-        return redirect()->route("admin.categories.index")->with("success", "Categoría eliminada correctamente");
     }
 
 
@@ -166,5 +181,12 @@ class CategoryController extends Controller
         if ($request->ajax()) {
             return view("layouts.__partials.ajax.row-categorie", compact("categories"))->render();
         }
+    }
+
+    public function getAllCategories()
+    {
+        $categories = Categorie::with("subcategories")->get()->makeHidden(['updated_at', 'created_at']);
+//        dd($categories);
+        return response()->json(["categories" => $categories]);
     }
 }

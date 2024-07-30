@@ -1,5 +1,4 @@
 <template>
-
     <AuthenticatedAdminLayout>
         <Head title="Categorías"></Head>
         <div class="dark:bg-black py-4 px-4 shadow-sm flex flex-col items-start border-y dark:border-zinc-900">
@@ -44,7 +43,7 @@
                         </div>
                         <div
                             class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                            <button type="button" @click="drawer.show()"
+                            <button type="button" @click="openCreateCat()"
                                     class="bg-black text-white hover:bg-zinc-900 dark:bg-white dark:text-black dark:hover:bg-zinc-200 font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 "
                                     data-drawer-target="drawer-right-example" data-drawer-show="drawer-right-example"
                                     data-drawer-placement="right" aria-controls="drawer-right-example">
@@ -74,16 +73,16 @@
                                      class="z-10 w-48 p-3 bg-white rounded-lg shadow dark:bg-zinc-950 hidden"
                                      data-popper-placement="bottom"
                                      style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(1262px, 293px, 0px);">
-                                    <form action="http://127.0.0.1:8000/admin/categories/search" method="POST"
-                                          id="formSearchCategorieCheck">
-                                        <input type="hidden" name="_token"
-                                               value="pmWQ5HbLkUUec7TMrr637gShdzRAH18Tmsa4LBl2" autocomplete="off">
+                                    <form
+                                        id="formSearchCategorieCheck">
                                         <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
                                             Categorías:
                                         </h6>
                                         <ul class="space-y-2 text-sm" aria-labelledby="filterDropdownButton">
                                             <li class="flex items-center">
-                                                <input id="no_subcategories" name="filter[]" type="checkbox"
+                                                <input id="no_subcategories" v-model="no_sub" name="filter[]"
+                                                       type="checkbox"
+                                                       @change="applyFilters()"
                                                        value="no_subcategories"
                                                        class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-white dark:border-gray-500">
                                                 <label for="no_subcategories"
@@ -92,7 +91,9 @@
                                                 </label>
                                             </li>
                                             <li class="flex items-center">
-                                                <input id="has_subcategories" name="filter[]" type="checkbox"
+                                                <input id="has_subcategories" v-model="with_sub" name="filter[]"
+                                                       type="checkbox"
+                                                       @change="applyFilters()"
                                                        value="has_subcategories"
                                                        class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-white dark:border-gray-500">
                                                 <label for="fitbit"
@@ -112,7 +113,7 @@
                                         :isServerMode="true"
                                         :pageSize="params.pagesize" :search="params.search">
                             <template #subcategories="data">
-                                <div v-if="data.value.subcategories===null">
+                                <div v-if="data.value.subcategories.length===0">
                                     No posee subcategorías
                                 </div>
                                 <div v-else>
@@ -120,9 +121,13 @@
                                           :key="subcat.id">{{ subcat.name }}</span>
                                 </div>
                             </template>
+                            <template #image="data">
+                                <img :src="'/storage/'+data.value.image" alt="" srcset="" style="max-width: 300px">
+                            </template>
                             <template #actions="data">
                                 <div class="flex gap-2">
                                     <button type="button"
+                                            @click="updateCategoryDrawer(data.value)"
                                             class="border-2 border-green-500 text-green-500 hover:text-white hover:bg-green-500 dark:bg-green-800 dark:hover:bg-green-900 dark:text-white font-medium rounded flex items-center gap-2 transition-colors text-sm p-2 editCategorie">
                                         <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24" width="24" height="24" color="#000000" fill="none">
@@ -137,6 +142,7 @@
 
                                     </button>
                                     <button type="button" data-form="formDeleteCategorie"
+                                            @click="openDeleteModal(data.value)"
                                             class="border-2 border-red-500 text-red-500 hover:text-white hover:bg-red-500 dark:bg-red-800 dark:hover:bg-red-900 dark:text-white  font-medium rounded flex items-center gap-2 transition-colors text-sm p-2 buttonDelete">
                                         <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24" width="24" height="24" color="#000000" fill="none">
@@ -167,10 +173,10 @@
              tabindex="-1" aria-labelledby="drawer-right-label">
             <h5 id="drawer-right-example-label"
                 class="inline-flex items-center mb-4 text-base font-semibold text-gray-500 dark:text-gray-400">
-                Nueva categoría
+                {{ form.id ? 'Editar' : 'Nueva' }} categoría
             </h5>
             <button type="button"
-                    @click="drawer.hide()"
+                    @click="closeDrawer()"
                     data-drawer-hide="drawer-right-example" aria-controls="drawer-right-example"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 end-2.5 inline-flex items-center justify-center dark:hover:bg-zinc-900 dark:hover:text-white close-drawer-right-example">
                 <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -190,7 +196,8 @@
                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                     Tipo de categoría
                                 </label>
-                                <select v-model="form.category_type" id="countries_disabled" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <select :disabled="form.id" v-model="form.category_type" id="countries_disabled"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     <option selected value="principal">Principal</option>
                                     <option value="secondary">Secundaria</option>
                                 </select>
@@ -203,10 +210,16 @@
                                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                         Categoría padre
                                     </label>
-                                    <select v-model="form.parent_id" id="countries_disabled" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option v-for="cat in $page.props.categories" :key="cat.id" selected :value="cat.id">{{cat.name}}</option>
+                                    <select v-model="form.parent_id"
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        <option v-for="cat in allCategories" :key="cat.id" selected
+                                                :value="cat.id">{{ cat.name }}
+                                        </option>
                                     </select>
                                 </div>
+                                <error-message name="parent_id" v-slot="{ message }">
+                                    <small class="text-red-600">{{ message }}</small>
+                                </error-message>
                             </div>
                         </div>
                     </div>
@@ -235,6 +248,7 @@
                         <error-message name="name" v-slot="{ message }">
                             <small class="text-red-600">Error: Nombre es requerido</small>
                         </error-message>
+                        <small v-if="catNameExists" class="text-red-600">Nombre de categoría existente</small>
                     </div>
                     <div>
                         <label for="image" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
@@ -243,7 +257,8 @@
                         <div class="flex items-center justify-center w-full">
                             <label for="imageCategorie"
                                    class="flex flex-col items-center justify-center w-full h-80 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-transparent hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-zinc-950 ">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <div v-if="form.image==null"
+                                     class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg class="w-12 h-12 text-gray-400 dark:text-gray-500"
                                          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
                                          color="#000000" fill="none">
@@ -260,14 +275,31 @@
                                         class="font-semibold">Clic para agregar </span> o desliza la imagen</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, WEBP</p>
                                 </div>
-                                <input id="imageCategorie" type="file" class="hidden" name="image">
-                                <img src="" alt="Preview Image" id="previewImage"
-                                     class="w-56 h-64 object-cover hidden m-10">
+                                <img v-if="form.image!==null && form.id ===null" :src="tempUri" alt="Preview Image"
+                                     id="previewImage"
+                                     class="w-56 h-64 object-cover m-10">
+                                <img v-if="form.image!==null && form.id !==null && typeof form.image ==='string'"
+                                     :src="'/storage/'+ form.image"
+                                     alt="Preview Image" id="previewImage"
+                                     class="w-56 h-64 object-cover m-10">
+                                <img v-else :src="tempUri" alt="Preview Image"
+                                     id="previewImage"
+                                     class="w-56 h-64 object-cover m-10">
+                                <Field id="imageCategorie" type="file" accept="image/png, image/jpeg" class="hidden"
+                                       @change="createImagePreview"
+                                       name="image">
+
+                                </Field>
                             </label>
+
                         </div>
+                        <error-message name="image" v-slot="{ message }">
+                            <small class="text-red-600">Error: Imagén es requerido</small>
+                        </error-message>
                     </div>
                     <div class="flex items-center justify-center gap-2">
                         <button type="submit"
+                                :disabled="loading"
                                 class="bg-black text-white hover:bg-zinc-900 dark:bg-white dark:text-black dark:hover:bg-zinc-200 font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 ">
                             <svg class="w-5 h-5 text-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                  width="24" height="24" color="#000000" fill="none">
@@ -277,10 +309,10 @@
                                     d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z"
                                     stroke="currentColor" stroke-width="1.5"></path>
                             </svg>
-                            Agregar categoría
+                            {{ form.id ? 'Actualizar' : 'Agregar' }} categoría
                         </button>
                         <button type="button"
-                                @click="drawer.hide()"
+                                @click="closeDrawer()"
                                 data-drawer-hide="drawer-right-example" aria-controls="drawer-right-example"
                                 class="border-2 text-zinc-600 hover:bg-zinc-100 border-zinc-300 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-900  font-medium rounded flex items-center gap-2 transition-colors text-sm px-3.5 py-2.5 close-drawer-right-example">
                             Cancelar
@@ -289,18 +321,46 @@
                 </Form>
             </div>
         </div>
+        <modal :show="deleteModal" @close="closeDeleteModal()" :closeable="true">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    ¿Desea continuar y eliminar categoría?
+                </h2>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Una vez la categoría es eliminada, no puede ser restaurada.
+                </p>
+                <div class="mt-6 flex justify-end">
+                    <SecondaryButton @click="closeDeleteModal()"> Cancelar</SecondaryButton>
+
+                    <DangerButton
+                        class="ms-3"
+                        :disabled="loading"
+                        @click="confirmDeleteCat()"
+                    >
+                        Eliminar
+                    </DangerButton>
+                </div>
+            </div>
+        </modal>
     </AuthenticatedAdminLayout>
 </template>
 <script setup lang="ts">
 import {Head, usePage} from "@inertiajs/vue3";
 import {computed, onMounted, reactive, ref} from 'vue';
 import Vue3Datatable from '@bhplugin/vue3-datatable';
-import { Form, Field, ErrorMessage } from 'vee-validate';
+import {Form, Field, ErrorMessage} from 'vee-validate';
 import * as yup from 'yup';
 import '@bhplugin/vue3-datatable/dist/style.css';
 import AuthenticatedAdminLayout from "@/Layouts/AuthenticatedAdminLayout.vue";
 import {initFlowbite} from "flowbite";
 import {Drawer} from 'flowbite';
+import {useCategoriesService} from "@/Store/Category";
+import {useToast} from "vue-toastification";
+import Modal from "@/Components/Modal.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import DangerButton from "@/Components/DangerButton.vue";
+import {P} from "../../../../bootstrap/ssr/assets/PrimaryButton-4NJ7Yqx3";
 
 const loading: any = ref(true);
 const total_rows = ref(0);
@@ -333,16 +393,42 @@ const params = reactive({
 });
 const rows: any = ref(null);
 const page = usePage()
+const store = useCategoriesService()
+const toast = useToast()
 // form init
+const with_sub = ref(false)
+const no_sub = ref(false)
+const allCategories = ref([])
+const deleteModal = ref(false)
 const form = ref({
-    name:null,
-    parent_id:null,
-    category_type:'principal'
+    id: null,
+    name: null,
+    parent_id: null,
+    category_type: 'principal',
+    image: null
 })
-// form validation
-const schemaForm = yup.object({
-    name: yup.string().required(),
-});
+const tempUri = ref(null)
+const schemaForm = computed(() => {
+    if (form.value.id !== null) {
+        return yup.object({
+            name: yup.string().required(),
+            image: yup.mixed().optional(),
+            // parent_id: yup.mixed().required('Categoría principal es requerida')
+        })
+    }
+    if (form.value.category_type === 'secondary') {
+        return yup.object({
+            name: yup.string().required(),
+            image: yup.mixed().optional(),
+            // parent_id: yup.mixed().required('Categoría principal es requerida')
+        })
+    } else {
+        return yup.object({
+            name: yup.string().required(),
+            image: yup.mixed().required(),
+        })
+    }
+})
 const cols =
     ref([
         {field: 'image', title: 'Imagen'},
@@ -363,9 +449,9 @@ const initCreateDrawer = () => {
 }
 const filteredData = computed(() => {
     if (!params.search) {
-        return page.props.categories;
+        return allCategories.value;
     }
-    return page.props.categories.filter(row => {
+    return rows.value.filter(row => {
         return Object.values(row).some(value =>
             String(value).toLowerCase().includes(params.search.toLowerCase())
         );
@@ -374,21 +460,164 @@ const filteredData = computed(() => {
 const getCategories = async () => {
     try {
         loading.value = true;
-        const data = filteredData.value
-        rows.value = data;
-        total_rows.value = data?.length
-
-    } catch {
+        const {data} = await store.getCategories()
+        allCategories.value = data.categories
+        form.value.parent_id = allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+            rows.value = data.categories;
+        total_rows.value = data.categories?.length
+    } catch (e) {
+        console.log(e)
     }
 
     loading.value = false;
 };
-const onSubmit = ()=>{
+const onSubmit = async () => {
+    if (catNameExists.value) {
+        return
+    }
+    if (form.value.image == null) {
+        toast.warning('Imagen es requerido');
+        return
+    }
+    try {
+        loading.value = true;
+        // create new form data
+        let formData = new FormData();
+        formData.append('name', form.value.name)
+        formData.append('parent_id', form.value.parent_id)
+        formData.append('image', form.value.image)
+        formData.append('category_type', form.value.category_type)
+        if (form.value.id === null) {
+            let data = await store.saveCategory(formData)
+            if (data.status == 200) {
+                toast.success('Categoría guardada')
+                drawer.value.hide()
+                form.value = Object.assign({}, {
+                    id: null,
+                    name: null,
+                    parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                    category_type: 'principal',
+                    image: null
+                })
+                getCategories()
+            } else {
+                toast.warning('Error al guardar, contacte soporte')
+            }
+        } else {
+            let data = await store.updateCategory(formData, form.value.id)
+            if (data.status == 200) {
+                toast.success('Categoría actualizada')
+                drawer.value.hide()
+                form.value = Object.assign({}, {
+                    id: null,
+                    name: null,
+                    parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                    category_type: 'principal',
+                    image: null
+                })
+                getCategories()
+            } else {
+                toast.warning('Error al guardar, contacte soporte')
+            }
+        }
 
-    console.log('here')
+        loading.value = false;
+
+    } catch (e) {
+        console.log(e)
+        toast.warning('Error al guardar, contacte soporte')
+    }
+}
+const updateCategoryDrawer = (cat: any) => {
+    form.value = cat
+    form.value.category_type = cat.parent_id == null ? "principal" : "secondary"
+    drawer.value.show()
 }
 const filterAction = () => {
-    getCategories();
+    rows.value = filteredData.value
+    total_rows.value = filteredData.value.length
 }
-
+const createImagePreview = (e: any) => {
+    form.value.image = e.target.files[0]
+    tempUri.value = URL.createObjectURL(form.value.image)
+}
+const catNameExists = computed(() => {
+    let cats = page.props.categories
+    let exist = false
+    cats.map((e) => {
+        if (form.value.name === e.name && form.value.id == null) {
+            exist = true
+        }
+    })
+    return exist
+})
+const closeDeleteModal = () => {
+    deleteModal.value = false
+}
+const closeDrawer = () => {
+    drawer.value.hide()
+    form.value = Object.assign({}, {
+        id: null,
+        name: null,
+        parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+        category_type: 'principal',
+        image: null
+    })
+    getCategories()
+}
+const openCreateCat = () => {
+    drawer.value.show()
+    form.value = Object.assign({}, {
+        id: null,
+        name: null,
+        parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+        category_type: 'principal',
+        image: null
+    })
+}
+const openDeleteModal = (cat) => {
+    deleteModal.value = true
+    form.value = cat
+}
+const confirmDeleteCat = async () => {
+    try {
+        loading.value = true
+        let data = await store.deleteCategory(form.value.id)
+        if (data.status == 200) {
+            toast.success('Categoría eliminada')
+            drawer.value.hide()
+            form.value = Object.assign({}, {
+                id: null,
+                name: null,
+                parent_id: allCategories.value.length > 0 ? allCategories.value[0]?.id : null,
+                category_type: 'principal',
+                image: null
+            })
+            getCategories()
+            loading.value = false
+            deleteModal.value = false
+        } else {
+            toast.warning('Error al guardar, contacte soporte')
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
+const applyFilters = () => {
+    let allCats = allCategories.value
+    if (no_sub.value) {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
+    } else {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
+    }
+    if (with_sub.value) {
+        rows.value = allCats.filter((c) => c.subcategories.length > 0)
+        total_rows.value = rows.value.length
+    } else {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
+    }
+}
 </script>
