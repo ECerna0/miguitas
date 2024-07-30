@@ -1,5 +1,5 @@
 <script>
-import Navbar from "../Components/frontend/Navbar.vue";
+import Navbar from "../Components/frontend/Navbar/Navbar.vue";
 
 export default {
     name: "UserLayout",
@@ -20,6 +20,7 @@ export default {
 
 <style scoped>
 main {
-    padding: 20px;
+    margin: 0;
+    padding: 0;
 }
 </style>
