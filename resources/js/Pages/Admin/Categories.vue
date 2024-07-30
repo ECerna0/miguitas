@@ -193,7 +193,7 @@
                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                     Tipo de categoría
                                 </label>
-                                <select v-model="form.category_type" id="countries_disabled"
+                                <select :disabled="form.id" v-model="form.category_type" id="countries_disabled"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     <option selected value="principal">Principal</option>
                                     <option value="secondary">Secundaria</option>
@@ -275,10 +275,13 @@
                                 <img v-if="form.image!==null && form.id ===null" :src="tempUri" alt="Preview Image"
                                      id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
-                                <img v-if="form.image!==null && form.id !==null" :src="'/storage/'+ form.image"
+                                <img v-if="form.image!==null && form.id !==null && typeof form.image ==='string'" :src="'/storage/'+ form.image"
                                      alt="Preview Image" id="previewImage"
                                      class="w-56 h-64 object-cover m-10">
-                                <Field id="image" type="file" accept="image/png, image/jpeg" class="hidden"
+                                <img v-else :src="tempUri" alt="Preview Image"
+                                     id="previewImage"
+                                     class="w-56 h-64 object-cover m-10">
+                                <Field id="imageCategorie" type="file" accept="image/png, image/jpeg" class="hidden"
                                        @change="createImagePreview"
                                        name="image">
 
@@ -372,6 +375,13 @@ const form = ref({
 })
 const tempUri = ref(null)
 const schemaForm = computed(() => {
+    if(form.value.id !==null){
+        return yup.object({
+            name: yup.string().required(),
+            image: yup.mixed().optional(),
+            // parent_id: yup.mixed().required('Categoría principal es requerida')
+        })
+    }
     if (form.value.category_type === 'secondary') {
         return yup.object({
             name: yup.string().required(),
@@ -431,6 +441,10 @@ const onSubmit = async () => {
     if (catNameExists.value) {
         return
     }
+    if(form.value.image==null){
+        toast.warning('Imagen es requerido');
+        return
+    }
     try {
         // create new form data
         let formData = new FormData();
@@ -450,13 +464,14 @@ const onSubmit = async () => {
                     category_type: 'principal',
                     image: null
                 })
+                getCategories()
             } else {
                 toast.warning('Error al guardar, contacte soporte')
             }
         } else {
-            let data = await store.updateCategory(formData)
+            let data = await store.updateCategory(formData,form.value.id)
             if (data.status == 200) {
-                toast.success('Categoría guardada')
+                toast.success('Categoría actualizada')
                 drawer.value.hide()
                 form.value = Object.assign({}, {
                     id: null,
@@ -465,12 +480,14 @@ const onSubmit = async () => {
                     category_type: 'principal',
                     image: null
                 })
+                getCategories()
             } else {
                 toast.warning('Error al guardar, contacte soporte')
             }
         }
 
     } catch (e) {
+        console.log(e)
         toast.warning('Error al guardar, contacte soporte')
     }
 }

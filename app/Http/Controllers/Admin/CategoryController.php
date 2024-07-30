@@ -96,30 +96,30 @@ class CategoryController extends Controller
     {
         try {
             DB::beginTransaction();
-            $rules = [
-                "name" => "required|string",
-                "image" => "nullable|image",
-            ];
-
             $categorie = Categorie::find($id);
             if (!$categorie) {
                 DB::rollBack();
                 return response()->json(['message' => "No se pudo encontrar la categoría"], 500);
             }
 
-            $validated = $request->validate($rules);
+            $validated = $categorie;
+//            dd($request->parent_id);
+            $validated->name = $request->name;
+            $validated->parent_id = $request->parent_id === "null" ? null : $request->parent_id;
             if ($request->hasFile("image")) {
                 if ($categorie->image) {
                     ImageHelper::deleteImage($categorie->image);
                 }
-                $validated["image"] = ImageHelper::saveImage($request->file("image"), "images/categories");
-            } else {
-                $validated["image"] = $categorie->image;
+                $validated->image = ImageHelper::saveImage($request->file("image"), "images/categories");
             }
-            $categorie->update($validated);
-            DB::commit();
-            return response()->json(['message' => 'Category saved successfully']);
-        } catch (Exception $exception) {
+            if ($validated->save()) {
+                DB::commit();
+                return response()->json(['message' => 'Category saved successfully']);
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Unable to save'], 500);
+            }
+        } catch (\Exception $exception) {
             DB::rollBack();
             return response()->json(['message' => $exception->getMessage()], 500);
         }
