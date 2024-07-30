@@ -80,7 +80,9 @@
                                         </h6>
                                         <ul class="space-y-2 text-sm" aria-labelledby="filterDropdownButton">
                                             <li class="flex items-center">
-                                                <input id="no_subcategories" name="filter[]" type="checkbox"
+                                                <input id="no_subcategories" v-model="no_sub" name="filter[]"
+                                                       type="checkbox"
+                                                       @change="applyFilters()"
                                                        value="no_subcategories"
                                                        class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-white dark:border-gray-500">
                                                 <label for="no_subcategories"
@@ -89,7 +91,9 @@
                                                 </label>
                                             </li>
                                             <li class="flex items-center">
-                                                <input id="has_subcategories" name="filter[]" type="checkbox"
+                                                <input id="has_subcategories" v-model="with_sub" name="filter[]"
+                                                       type="checkbox"
+                                                       @change="applyFilters()"
                                                        value="has_subcategories"
                                                        class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-white dark:border-gray-500">
                                                 <label for="fitbit"
@@ -356,6 +360,7 @@ import {useToast} from "vue-toastification";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
+import {P} from "../../../../bootstrap/ssr/assets/PrimaryButton-4NJ7Yqx3";
 
 const loading: any = ref(true);
 const total_rows = ref(0);
@@ -391,6 +396,8 @@ const page = usePage()
 const store = useCategoriesService()
 const toast = useToast()
 // form init
+const with_sub = ref(false)
+const no_sub = ref(false)
 const allCategories = ref([])
 const deleteModal = ref(false)
 const form = ref({
@@ -594,6 +601,23 @@ const confirmDeleteCat = async () => {
         }
     } catch (e) {
         console.log(e)
+    }
+}
+const applyFilters = () => {
+    let allCats = allCategories.value
+    if (no_sub.value) {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
+    } else {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
+    }
+    if (with_sub.value) {
+        rows.value = allCats.filter((c) => c.subcategories.length > 0)
+        total_rows.value = rows.value.length
+    } else {
+        rows.value = allCats.filter((c) => c.subcategories.length == 0)
+        total_rows.value = rows.value.length
     }
 }
 </script>
