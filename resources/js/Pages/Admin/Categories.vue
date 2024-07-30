@@ -75,8 +75,6 @@
                                      style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(1262px, 293px, 0px);">
                                     <form
                                         id="formSearchCategorieCheck">
-                                        <input type="hidden" name="_token"
-                                               value="pmWQ5HbLkUUec7TMrr637gShdzRAH18Tmsa4LBl2" autocomplete="off">
                                         <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
                                             Categorías:
                                         </h6>
