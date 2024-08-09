@@ -1,11 +1,11 @@
 <script>
-import CardProduct from "@/Components/frontend/Home/CardProduct.vue";
+import CardProductFeatured from "@/Components/frontend/Home/CardProductFeatured.vue";
 import PrimaryButton from "@/Components/frontend/PrimaryButton.vue";
 
 export default {
     name: "FeaturedProducts",
     components: {
-        CardProduct,
+        CardProductFeatured,
         PrimaryButton,
     },
 };
@@ -25,9 +25,9 @@ export default {
             </p>
         </div>
         <div class="flex flex-wrap justify-center gap-8 mx-auto mt-8">
-            <CardProduct />
-            <CardProduct />
-            <CardProduct />
+            <CardProductFeatured />
+            <CardProductFeatured />
+            <CardProductFeatured />
         </div>
         <div class="flex justify-center mt-10">
             <PrimaryButton buttonText="Ver más" />
