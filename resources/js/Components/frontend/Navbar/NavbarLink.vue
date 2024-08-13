@@ -7,18 +7,9 @@
     </a>
 </template>
 
-<script>
-export default {
-    name: "NavbarLink",
-    props: {
-        href: {
-            type: String,
-            required: true,
-        },
-        text: {
-            type: String,
-            required: true,
-        },
-    },
-};
+<script setup>
+defineProps({
+    href: String,
+    text: String,
+});
 </script>
