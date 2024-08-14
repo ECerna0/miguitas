@@ -1,9 +1,9 @@
 <template>
-    <div>
+    <div class="w-24 h-24">
         <img
             src="/images/logo.png"
             alt="Logo image"
-            class="w-24 h-24 object-contain"
+            class="w-full h-full object-cover"
         />
     </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import SearchIcon from "@Icons/SearchIcon.vue";
 
 const searchInput = ref(null);
 
@@ -21,28 +22,7 @@ const handleSearch = () => {
         <button
             class="flex justify-center items-center border-s-2 bg-pink hover:bg-pinkSelected border-blue w-14 h-10 ms-auto"
         >
-            <svg
-                class="stroke-darkBlue"
-                width="22"
-                height="22"
-                viewBox="0 0 22 22"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <path
-                    d="M9.25769 0.814432C7.62447 0.814432 6.02793 1.29874 4.66996 2.2061C3.312 3.11347 2.25359 4.40314 1.62858 5.91204C1.00358 7.42093 0.840048 9.08128 1.15867 10.6831C1.4773 12.2849 2.26377 13.7563 3.41862 14.9112C4.57348 16.066 6.04486 16.8525 7.64669 17.1711C9.24853 17.4898 10.9089 17.3262 12.4178 16.7012C13.9267 16.0762 15.2163 15.0178 16.1237 13.6598C17.0311 12.3019 17.5154 10.7053 17.5154 9.07211C17.5152 6.88208 16.6452 4.78179 15.0966 3.23321C13.548 1.68462 11.4477 0.814572 9.25769 0.814432Z"
-                    stroke="var(--blue)"
-                    stroke-width="1.5"
-                    stroke-miterlimit="10"
-                />
-                <path
-                    d="M15.4185 15.2329L21.1856 21"
-                    stroke="var(--blue)"
-                    stroke-width="1.5"
-                    stroke-miterlimit="10"
-                    stroke-linecap="round"
-                />
-            </svg>
+            <SearchIcon class="stroke-darkBlue" />
         </button>
     </div>
 </template>

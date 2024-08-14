@@ -41,7 +41,6 @@ export default {
                 lightBlue2: "#6E83BE",
                 peach: "#e8cad2",
                 darkBlueSelected: "#84a0e3",
-                pinkSelected: "#e296e2",
                 greenSelected: "#34756b",
                 lightBlue2Selected: "#236baf",
             },
