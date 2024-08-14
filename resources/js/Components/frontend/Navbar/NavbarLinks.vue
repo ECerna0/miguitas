@@ -4,7 +4,7 @@ import WhatsAppIcon from "@Icons/WhatsAppIcon.vue";
 
 const links = [
     { href: "/", text: "Inicio" },
-    { href: "/shop", text: "Tienda" },
+    { href: route("shop.index"), text: "Tienda" },
     { href: "/faq", text: "Preguntas frecuentes" },
     { href: "/about", text: "Conócenos" },
     { href: "/blog", text: "Blog" },
@@ -20,7 +20,7 @@ const links = [
         <li>
             <a href="" class="group">
                 <WhatsAppIcon
-                    class="group-hover:fill-blueSelected w-10 h-10 fill-blue"
+                    class="group-hover:fill-blue-selected w-10 h-10 fill-blue"
                 />
             </a>
         </li>
