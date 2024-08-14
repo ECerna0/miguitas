@@ -1,7 +1,7 @@
 <template>
     <a
         :href="href"
-        class="hover:text-pinkSelected transition-colors duration-100"
+        class="hover:text-pink-selected transition-colors duration-100"
     >
         {{ text }}
     </a>
