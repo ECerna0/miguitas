@@ -20,9 +20,9 @@ const handleSearch = () => {
             @input="handleSearch"
         />
         <button
-            class="flex justify-center items-center border-s-2 bg-pink hover:bg-pinkSelected border-blue w-14 h-10 ms-auto"
+            class="flex justify-center items-center border-s-2 bg-pink hover:bg-pink-selected border-blue w-14 h-10 ms-auto"
         >
-            <SearchIcon class="stroke-darkBlue" />
+            <SearchIcon class="stroke-dark-blue" />
         </button>
     </div>
 </template>
