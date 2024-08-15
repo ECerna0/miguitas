@@ -4,7 +4,7 @@ import WhatsAppIcon from "@Icons/WhatsAppIcon.vue";
 
 const links = [
     { href: "/", text: "Inicio" },
-    { href: "/shop", text: "Tienda" },
+    { href: route("shop.index"), text: "Tienda" },
     { href: "/faq", text: "Preguntas frecuentes" },
     { href: "/about", text: "Conócenos" },
     { href: "/blog", text: "Blog" },
