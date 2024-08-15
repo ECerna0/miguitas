@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-lBlue p-8 w-full">
+    <div class="bg-light-blue p-8 w-full">
         <div class="flex justify-between mx-auto w-[70%]">
             <div class="flex flex-col font-pluto_m text-white">
                 <span>Miguitas Pet Treats® NIT: 0614-120690-129-7</span>
