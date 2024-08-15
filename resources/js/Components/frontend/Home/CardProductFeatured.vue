@@ -1,6 +1,6 @@
 <template>
     <div
-        class="relative bg-lightGray after:bg-pink rounded-sm w-96 featured-card-container"
+        class="relative bg-light-gray after:bg-pink rounded-sm w-96 featured-card-container"
     >
         <div class="flex flex-col p-2 rounded-sm featured-card-body">
             <div class="m-8 h-max featured-card-img">

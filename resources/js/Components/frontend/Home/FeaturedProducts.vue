@@ -14,7 +14,7 @@ export default {
 <template>
     <section class="p-8">
         <div class="text-center">
-            <h2 class="font-pluto_m text-4xl text-lightBlue">
+            <h2 class="font-pluto_m text-4xl text-light-blue">
                 Productos destacados
             </h2>
             <p class="mx-auto mt-2 w-1/2 font-dine_r font-medium text-gray">
