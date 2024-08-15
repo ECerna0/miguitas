@@ -3,7 +3,7 @@ import NavbarLink from "@/Components/frontend/Navbar/NavbarLink.vue";
 import WhatsAppIcon from "@Icons/WhatsAppIcon.vue";
 
 const links = [
-    { href: "/", text: "Inicio" },
+    { href: route("home"), text: "Inicio" },
     { href: route("shop.index"), text: "Tienda" },
     { href: "/faq", text: "Preguntas frecuentes" },
     { href: "/about", text: "Conócenos" },
