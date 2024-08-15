@@ -7,15 +7,16 @@ use Inertia\Inertia;
 use \App\Http\Controllers\Admin\CategoryController;
 
 Route::get('/', function () {
-
     return Inertia::render('Shop/Home');
+})->name("home");
 
-    /*  return Inertia::render('Welcome', [
+Route::get("/admin", function () {
+    return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-    ]); */
+    ]);
 });
 
 Route::get("/shop", function () {
